@@ -3,15 +3,21 @@ import cv2
 import numpy as np
 import os
 import random
+from scripts.data_utils import labels
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 
 class NaiveApproach:
     def __init__(self):
+        self.template_size = (100, 100)
+        self.max_samples = 20
+        self.template_matching_threshold = 0.8
         self.templates = self.load_templates()
 
     def load_templates(self):
-        templates = {}
+        label_dict = labels()
+        templates = []
+        counter = {classname: 0 for classname in label_dict.values()}
 
         with open(os.path.join(ROOT, '../data/labeled/train.csv')) as csvfile:
             csvreader = csv.reader(csvfile)
@@ -19,19 +25,24 @@ class NaiveApproach:
 
             for row in csvreader:
                 image_path, label = row
-                if label not in templates:
-                    templates[label] = cv2.imread(os.path.join(ROOT, '../data/labeled/', image_path), 0)
+                classname = label_dict[label]
+                if counter[classname] <= self.max_samples:
+                    template = cv2.imread(os.path.join(ROOT, '../data/labeled/', image_path), 0)
+                    template_resize = cv2.resize(template, self.template_size)
+                    templates.append((classname, template_resize))
+                    counter[classname] += 1
+                else:
+                    continue
 
         return templates
 
     def detect_objects(self, image):
         detections = []
         
-        for label, template in self.templates.items():
+        for label, template in self.templates:
             # Template matching
             res = cv2.matchTemplate(image, template, cv2.TM_CCOEFF_NORMED)
-            threshold = 0.8
-            loc = np.where(res >= threshold)
+            loc = np.where(res >= self.template_matching_threshold)
             
             for pt in zip(*loc[::-1]):
                 w, h = template.shape[::-1]
@@ -58,9 +69,15 @@ class NaiveApproach:
         return image
     
     def process(self, image_path, k):
+        print('image read')
         image = cv2.imread(os.path.join(ROOT, '../data/input/', image_path))
+        print('image greyscale')
         image_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        print('detection')
         detections = self.detect_objects(image_gray)
+        print('selection')
         selection = self.select_top_k(detections, k)
+        print('output')
         output_image = self.draw_bounding_boxes(image, selection)
+        print('save')
         cv2.imwrite(os.path.join(ROOT, '../data/output/', image_path), output_image)
