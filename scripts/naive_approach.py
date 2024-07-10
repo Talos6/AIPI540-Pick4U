@@ -3,7 +3,6 @@ import cv2
 import numpy as np
 import os
 import random
-from scripts.data_utils import labels
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 
@@ -14,8 +13,13 @@ class NaiveApproach:
         self.template_matching_threshold = 0.8
         self.templates = self.load_templates()
 
+    def load_labels(self):
+        with open(os.path.join(ROOT, '../data/labeled/classname.txt'), 'r') as file:
+            lables = {str(i): row.strip() for i, row in enumerate(file, start=0)}
+        return lables
+
     def load_templates(self):
-        label_dict = labels()
+        label_dict = self.load_labels()
         templates = []
         counter = {classname: 0 for classname in label_dict.values()}
 
