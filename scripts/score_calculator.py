@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torchvision.transforms as transforms
 import torchvision.models as models
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, random_split
 from scripts.image_dataset import ImageDataset
 import os
 
@@ -15,7 +15,7 @@ class ScoreCalculator:
         self.model = None
         self.batch_size = 32
         self.num_workers = 4
-        self.epoch = 10
+        self.epochs = 10
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.transform = transforms.Compose([
             transforms.Resize(256),
@@ -31,14 +31,18 @@ class ScoreCalculator:
         self.model.to(self.device)
 
     def prepare_data(self):
-        train_dataset = ImageDataset('train', self.fruit, transform=self.transform)
+        dataset = ImageDataset('train', self.fruit, transform=self.transform)
+        train_size = int(0.8 * len(dataset))
+        val_size = len(dataset) - train_size
+        train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
         test_dataset = ImageDataset('test', self.fruit, transform=self.transform)
         train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=self.num_workers)
+        val_loader = DataLoader(val_dataset, batch_size=self.batch_size, shuffle=False, num_workers=self.num_workers)
         test_loader = DataLoader(test_dataset, batch_size=self.batch_size, shuffle=False, num_workers=self.num_workers)
-        return train_loader, test_loader
+        return train_loader, val_loader, test_loader
 
     def train_n_evaluate(self):
-        train_loader, test_loader = self.prepare_data()
+        train_loader, val_loader, test_loader = self.prepare_data()
 
         criterion = nn.BCEWithLogitsLoss()
         optimizer = optim.Adam(self.model.parameters(), lr=3e-4)
@@ -57,19 +61,23 @@ class ScoreCalculator:
                 running_loss += loss.item()
 
             epoch_loss = running_loss / len(train_loader)
-            val_accuracy = self.evaluate(test_loader)
+            val_accuracy = self.evaluate(val_loader)
             print(f"Epoch {epoch+1}/{self.epochs}, Loss: {epoch_loss:.4f}, Validation Accuracy: {val_accuracy * 100:.2f}%")
 
             if val_accuracy > best_accuracy:
                 best_accuracy = val_accuracy
                 self.save_model(f"../models/{self.fruit}_score.pth")
 
+        self.load_model(f"../models/{self.fruit}_score.pth")
+        test_accuracy = self.evaluate(test_loader)
+        print(f"Test Accuracy: {test_accuracy * 100:.2f}%")
+
     def evaluate(self, data_loader):
         self.model.eval()
         correct = 0
         total = 0
         with torch.no_grad():
-            for inputs, labels in self.val_loader:
+            for inputs, labels in data_loader:
                 inputs, labels = inputs.to(self.device), labels.to(self.device)
                 outputs = self.model(inputs).squeeze()
                 predicted = (torch.sigmoid(outputs) > 0.5).long()
