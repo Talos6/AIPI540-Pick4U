@@ -10,7 +10,7 @@ import os
 ROOT = os.path.dirname(os.path.abspath(__file__))
 
 class ScoreCalculator:
-    def __init__(self, fruit):
+    def __init__(self, fruit=None):
         self.fruit = fruit
         self.model = None
         self.batch_size = 32
@@ -98,5 +98,7 @@ class ScoreCalculator:
         torch.save(self.model.state_dict(), os.path.join(ROOT, path))
 
     def load_model(self, path):
-        self.model.load_state_dict(torch.load(os.path.join(ROOT, path)))
+        if self.model is None:
+            self.build_model()
+        self.model.load_state_dict(torch.load(os.path.join(ROOT, path), map_location=self.device))
         self.model.to(self.device)
