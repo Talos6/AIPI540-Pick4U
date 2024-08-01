@@ -1,22 +1,16 @@
-import os
-import cv2
-from PIL import Image, ImageDraw, ImageFont
+from PIL import ImageDraw, ImageFont
 from scripts.fruit_detector import FruitDetector
 from scripts.score_calculator import ScoreCalculator
-import numpy as np
-
-ROOT = os.path.dirname(os.path.abspath(__file__))
 
 class NNApproach:
     
-    def process(self, image_path, k):
+    def process(self, image, k):
         fruit_detector = FruitDetector()
         fruit_detector.load_model()
         score_calculator = ScoreCalculator()
         score_calculator.build_model()
-        identified_units = fruit_detector.detect_objects(os.path.join(ROOT, '../data/input/', image_path))
+        identified_units = fruit_detector.detect_objects(image)
 
-        image = Image.open(os.path.join(ROOT, '../data/input/', image_path))
         scored_units = []
         for identified_unit in identified_units:
             x1, y1, x2, y2 = identified_unit['x1'], identified_unit['y1'], identified_unit['x2'], identified_unit['y2']
@@ -42,4 +36,4 @@ class NNApproach:
             label = f"{unit['label']}: {unit['score']:.2f}"
             draw.rectangle([x1, y1, x2, y2], outline='green', width=2)
             draw.text((x1, y1-10), label, fill='green', font=font)
-        image.save(os.path.join(ROOT, '../data/output/', image_path))
+        return image
