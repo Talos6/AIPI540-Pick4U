@@ -7,6 +7,9 @@ import random
 ROOT = os.path.dirname(os.path.abspath(__file__))
 
 class NaiveApproach:
+    '''
+    Naive Approach: Template Matching -> Random Recommendation
+    '''
     def __init__(self):
         self.template_size = (100, 100)
         self.max_samples = 20
@@ -14,11 +17,17 @@ class NaiveApproach:
         self.templates = self.load_templates()
 
     def load_labels(self):
+        '''
+        Prepare class labels
+        '''
         with open(os.path.join(ROOT, '../data/labeled/classname.txt'), 'r') as file:
             lables = {str(i): row.strip() for i, row in enumerate(file, start=0)}
         return lables
 
     def load_templates(self):
+        '''
+        Prepare matching templates
+        '''
         label_dict = self.load_labels()
         templates = []
         counter = {classname: 0 for classname in label_dict.values()}
@@ -41,6 +50,9 @@ class NaiveApproach:
         return templates
 
     def detect_objects(self, image):
+        '''
+        Object dection by template matching
+        '''
         detections = []
         
         for label, template in self.templates:
@@ -56,6 +68,9 @@ class NaiveApproach:
         return detections
 
     def select_top_k(self, detections, k):
+        '''
+        Random selection of top k
+        '''
         detections_sorted = sorted(detections, key=lambda x: x[2], reverse=True)
         
         if k > len(detections_sorted):
@@ -65,6 +80,9 @@ class NaiveApproach:
         return selected_detections
 
     def draw_bounding_boxes(self, image, detections):
+        '''
+        Response by drawing bounding boxes
+        '''
         for (bbox, label, score) in detections:
             x1, y1, x2, y2 = bbox
             cv2.rectangle(image, (x1, y1), (x2, y2), (0, 255, 0), 2)
@@ -73,6 +91,9 @@ class NaiveApproach:
         return image
     
     def process(self, image_path, k):
+        '''
+        Image load -> Greyscale -> Detection -> Selection -> Output
+        '''
         print('image read')
         image = cv2.imread(os.path.join(ROOT, '../data/input/', image_path))
         print('image greyscale')

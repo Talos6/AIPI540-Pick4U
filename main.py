@@ -3,27 +3,35 @@ import streamlit as st
 from PIL import Image, ImageOps
 
 def run():
+    # Side Panel
     st.sidebar.title("Pick4U")
+
+    # Content
     page = st.sidebar.radio('Go To', ["Application", "About"])
 
     if page == "Application":
+        # Application
         nn_approach = NNApproach()
-    
+
+        # Elements
         default_image = Image.open("data/streamlit/default.png")
         image_display = st.image(default_image, use_column_width=True)
         rec_config = st.slider("Number of Picks", 1, 20, 3)
         uploaded_file = st.file_uploader("Upload a photo", type=["png", "jpg", "jpeg"])
 
+        # Actions
         if uploaded_file is not None:
             image = Image.open(uploaded_file)
             grey_image = ImageOps.grayscale(image)
 
+            # Spinner for processing
             with st.spinner('Uploading... Detecting... Evluating... Ranking... Recomending... Drawing... Responding...'):
                 image_display.image(grey_image, use_column_width=True)
                 result = nn_approach.process(image, rec_config)
             image_display.image(result, use_column_width=True)
 
     elif page == "About":
+        # About
         st.write("## Reference")
         st.write("### Author")
         st.write("Xinyue(Yancey) Yang")

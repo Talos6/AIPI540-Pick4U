@@ -8,6 +8,9 @@ import joblib
 ROOT = os.path.dirname(os.path.abspath(__file__))
 
 class FruitClassifier:
+    '''
+    Multi-class classifier for image by SVM with color-hist features
+    '''
     def __init__(self):
         self.img_size = (100, 100)
         self.model = SVC(probability=True)
@@ -18,9 +21,15 @@ class FruitClassifier:
         }
 
     def build_model(self):
+        '''
+        Build SVM model
+        '''
         self.model = SVC(probability=True)
 
     def load_data(self, type):
+        '''
+        Load images and labels from the dataset
+        '''
         images = []
         labels = []
         for fruit, label in self.label_dict.items():
@@ -39,6 +48,9 @@ class FruitClassifier:
         return images, labels
 
     def extract_features(self, images):
+        '''
+        Prepare color-hist features
+        '''
         features = []
         for img in images:
             hist = cv2.calcHist([img], [0, 1, 2], None, [8, 8, 8], [0, 256, 0, 256, 0, 256]).flatten()
@@ -46,11 +58,17 @@ class FruitClassifier:
         return np.array(features)
 
     def train(self):
+        '''
+        Train the model
+        '''
         train_images, train_labels = self.load_data('train')
         train_features = self.extract_features(train_images)
         self.model.fit(train_features, train_labels)
 
     def evaluate(self):
+        '''
+        Evaluate the model with test accuracy
+        '''
         test_images, test_labels = self.load_data('test')
         test_features = self.extract_features(test_images)
         predictions = self.model.predict(test_features)
@@ -58,14 +76,26 @@ class FruitClassifier:
         print(f"Accuracy: {accuracy}")
 
     def predict(self, features):
+        '''
+        Prediction
+        '''
         prediction = self.model.predict(features)
         return prediction[0]
 
     def save_model(self):
+        '''
+        Save the model for future use
+        '''
         joblib.dump(self.model, os.path.join(ROOT, '../models/fruit_classifier.pkl'))
 
     def load_model(self):
+        '''
+        Load the model
+        '''
         self.model = joblib.load(os.path.join(ROOT, '../models/fruit_classifier.pkl'))
 
     def get_fruit_name(self, label):
+        '''
+        Get fruit name by its label
+        '''
         return [ key for key, value in self.label_dict.items() if value == label][0]

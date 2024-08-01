@@ -8,6 +8,9 @@ import joblib
 ROOT = os.path.dirname(os.path.abspath(__file__))
 
 class HealthClassifier:
+    '''
+    Binary classifier for fruit health or rotten by Naive Bayes
+    '''
     def __init__(self):
         self.img_size = (100, 100)
         self.model = None
@@ -17,9 +20,15 @@ class HealthClassifier:
         }
 
     def build_model(self):
+        ''''
+        Build Naive Bayes model
+        '''
         self.model = GaussianNB()
 
     def load_data(self, fruit, type):
+        '''
+        Load images and labels from the dataset
+        '''
         images = []
         labels = []
         for condition, label in self.label_dict.items():
@@ -34,6 +43,9 @@ class HealthClassifier:
         return images, labels
 
     def extract_features(self, images):
+        '''
+        Prepare color-hist features
+        '''
         features = []
         for img in images:
             hist = cv2.calcHist([img], [0, 1, 2], None, [8, 8, 8], [0, 256, 0, 256, 0, 256]).flatten()
@@ -41,11 +53,17 @@ class HealthClassifier:
         return np.array(features)
 
     def train(self, fruit):
+        '''
+        Train the model
+        '''
         train_images, train_labels = self.load_data(fruit, 'train')
         train_features = self.extract_features(train_images)
         self.model.fit(train_features, train_labels)
 
     def evaluate(self, fruit):
+        '''
+        Evaluate the model with test accuracy
+        '''
         test_images, test_labels = self.load_data(fruit, 'test')
         test_features = self.extract_features(test_images)
         predictions = self.model.predict(test_features)
@@ -53,10 +71,19 @@ class HealthClassifier:
         print(f"{fruit} Health Accuracy: {accuracy}")
 
     def predict(self, features):
+        '''
+        Prediction, return the probability score
+        '''
         return self.model.predict_proba(features)[0][1]
 
     def save_model(self, fruit):
+        '''
+        Save the model for future use
+        '''
         joblib.dump(self.model, os.path.join(ROOT, f'../models/{fruit}_health_classifier.pkl'))
 
     def load_model(self, fruit):
+        '''
+        Load the model
+        '''
         self.model = joblib.load(os.path.join(ROOT, f'../models/{fruit}_health_classifier.pkl'))
