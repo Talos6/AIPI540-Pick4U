@@ -10,8 +10,8 @@ class FruitDetector:
     def load_model(self):
         self.model = YOLO(os.path.join(ROOT, '../models/yolov8n.pt'))
     
-    def detect_objects(self, img_path):
-        results = self.model.predict(source=img_path, classes=[46,47,49], conf=0.05)
+    def detect_objects(self, img):
+        results = self.model.predict(source=img, classes=[46,47,49], conf=0.05)
         result_boxes = []
         for result in results:
             for box in result.boxes:
