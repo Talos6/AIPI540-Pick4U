@@ -7,17 +7,29 @@ from scripts.health_classifier import HealthClassifier
 ROOT = os.path.dirname(os.path.abspath(__file__))
 
 class MLApproach:
+    '''
+    ML Approach: Contour Detection -> Feature Abstraction -> Label Classification -> Quality Score
+    '''
     def image_preprocess(self, image):
+        '''
+        Preprocess the image
+        '''
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         blurred = cv2.GaussianBlur(gray, (5, 5), 0)
         return blurred
     
     def image_segmentation(self, image):
+        '''
+        segment the image by contour detection
+        '''
         edged = cv2.Canny(image, 50, 150)
         contours, _ = cv2.findContours(edged, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         return contours
     
     def extract_features(self, image, contours):
+        '''
+        Prepare color-hist features
+        '''
         mask = np.zeros(image.shape[:2], dtype="uint8")
         cv2.drawContours(mask, contours, -1, 255, -1)
         masked_image = cv2.bitwise_and(image, image, mask=mask)
@@ -25,11 +37,17 @@ class MLApproach:
         return color_hist
     
     def draw_bounding_box(self, image, contour, label):
+        '''
+        Draw bounding box for detections
+        '''
         x, y, w, h = cv2.boundingRect(contour)
         cv2.rectangle(image, (x, y), (x+w, y+h), (0, 255, 0), 2)
         cv2.putText(image, label, (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36,255,12), 2)
     
     def process(self, image_path, k):
+        '''
+        Image Load -> Preprocess -> Segmentation -> Feature Extraction -> Label classification -> Score calculation -> Top k selection -> Response Drawing -> Output
+        '''
         fruit_classifier = FruitClassifier()
         fruit_classifier.load_model()
         image = cv2.imread(os.path.join(ROOT, '../data/input/', image_path))

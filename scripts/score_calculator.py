@@ -10,6 +10,9 @@ import os
 ROOT = os.path.dirname(os.path.abspath(__file__))
 
 class ScoreCalculator:
+    '''
+    Score calculator by transfer learning with pre-trained ResNet50 model
+    '''
     def __init__(self, fruit=None):
         self.fruit = fruit
         self.model = None
@@ -26,11 +29,17 @@ class ScoreCalculator:
         
 
     def build_model(self):
+        '''
+        Build the model with pre-trained ResNet50, and replace the last layer
+        '''
         self.model = models.resnet50(pretrained=True)
         self.model.fc = nn.Linear(self.model.fc.in_features, 1)
         self.model.to(self.device)
 
     def prepare_data(self):
+        '''
+        Prepare data loaders
+        '''
         dataset = ImageDataset('train', self.fruit, transform=self.transform)
         train_size = int(0.8 * len(dataset))
         val_size = len(dataset) - train_size
@@ -42,6 +51,9 @@ class ScoreCalculator:
         return train_loader, val_loader, test_loader
 
     def train_n_evaluate(self):
+        '''
+        Train and evaluate the model
+        '''
         train_loader, val_loader, test_loader = self.prepare_data()
 
         criterion = nn.BCEWithLogitsLoss()
@@ -73,6 +85,9 @@ class ScoreCalculator:
         print(f"Test Accuracy: {test_accuracy * 100:.2f}%")
 
     def evaluate(self, data_loader):
+        '''
+        Evaluate the model with given data loader
+        '''
         self.model.eval()
         correct = 0
         total = 0
@@ -87,6 +102,9 @@ class ScoreCalculator:
         return accuracy
 
     def score(self, image):
+        '''
+        Prediction, return the score
+        '''
         image = self.transform(image).unsqueeze(0).to(self.device)
         self.model.eval()
         with torch.no_grad():
@@ -95,9 +113,15 @@ class ScoreCalculator:
         return score
 
     def save_model(self, path):
+        '''
+        Save the model for future use
+        '''
         torch.save(self.model.state_dict(), os.path.join(ROOT, path))
 
     def load_model(self, path):
+        '''
+        Load the model
+        '''
         if self.model is None:
             self.build_model()
         self.model.load_state_dict(torch.load(os.path.join(ROOT, path), map_location=self.device))

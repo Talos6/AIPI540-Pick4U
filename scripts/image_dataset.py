@@ -6,6 +6,9 @@ from PIL import Image
 ROOT = os.path.dirname(os.path.abspath(__file__))
 
 class ImageDataset(Dataset):
+    '''
+    A custom torch dataset for data loading
+    '''
     def __init__(self, type, fruit, transform=None):
         self.transform = transform
         self.image_paths = []

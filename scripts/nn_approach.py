@@ -3,7 +3,9 @@ from scripts.fruit_detector import FruitDetector
 from scripts.score_calculator import ScoreCalculator
 
 class NNApproach:
-    
+    '''
+    NN Approach: Fruit Detection -> Quality Score -> Top k Selection -> Response Drawing -> Output
+    '''
     def process(self, image, k):
         fruit_detector = FruitDetector()
         fruit_detector.load_model()
