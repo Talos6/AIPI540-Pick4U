@@ -18,7 +18,7 @@ class NNApproach:
             x1, y1, x2, y2 = identified_unit['x1'], identified_unit['y1'], identified_unit['x2'], identified_unit['y2']
             unit_image = image.crop((x1, y1, x2, y2))
             fruit_label = identified_unit['label']
-            fruit_class = fruit_label if fruit_label[:-1] == 'a' else fruit_label + 's'
+            fruit_class = fruit_label if fruit_label[-1] == 'a' else fruit_label + 's'
             score_calculator.load_model(f"../models/{fruit_class}_score.pth")
             score = score_calculator.score(unit_image)
             scored_units.append({
